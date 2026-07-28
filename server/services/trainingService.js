@@ -10,7 +10,7 @@ export class TrainingService {
 
   async getTrainingPayload(currentUserId) {
     const [movies, seedUsers, db] = await Promise.all([
-      this.movieRepository.listMovies(),
+      this.movieRepository.listPublicMovies(),
       this.loadSeedUsers(),
       this.store.read(),
     ]);

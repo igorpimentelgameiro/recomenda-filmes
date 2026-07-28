@@ -16,9 +16,15 @@ export class PineconeMovieIndex {
     return Boolean(this.pc);
   }
 
-  status() {
-    return {
+  status(options = {}) {
+    const publicStatus = {
       enabled: this.isEnabled(),
+    };
+
+    if (!options.detailed) return publicStatus;
+
+    return {
+      ...publicStatus,
       indexName: this.indexName,
       namespace: this.namespaceName,
       embedModel: this.embedModel,

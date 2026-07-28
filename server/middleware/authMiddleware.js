@@ -1,10 +1,13 @@
 import { verifyToken } from '../utils/token.js';
 import { HttpError } from '../utils/http.js';
+import { parseCookies, SESSION_COOKIE_NAME } from '../utils/sessionCookie.js';
 
 export function authMiddleware(authSecret) {
   return (req, _res, next) => {
     const header = req.get('authorization') ?? '';
-    const [, token] = header.match(/^Bearer\s+(.+)$/i) ?? [];
+    const [, bearerToken] = header.match(/^Bearer\s+(.+)$/i) ?? [];
+    const cookies = parseCookies(req.get('cookie') ?? '');
+    const token = cookies[SESSION_COOKIE_NAME] || bearerToken;
 
     if (!token) {
       next(new HttpError(401, 'Token ausente.'));

@@ -1,4 +1,5 @@
-const TOKEN_KEY = 'recomenda-filmes.token';
+const LEGACY_TOKEN_KEY = 'recomenda-filmes.token';
+localStorage.removeItem(LEGACY_TOKEN_KEY);
 
 const EVENT_LABELS = {
   liked: 'Gostei',
@@ -15,7 +16,6 @@ const EVENT_RATING = {
 };
 
 const state = {
-  token: localStorage.getItem(TOKEN_KEY),
   authMode: 'login',
   user: null,
   movies: [],
@@ -54,38 +54,46 @@ async function boot() {
   renderLoading();
 
   try {
-    await loadPublicData();
-
-    if (state.token) {
-      await loadSession();
-    }
+    await loadPublicStatus();
+    await loadSession();
   } catch (error) {
     resetSession();
-    setError(error.message);
+    if (error.status !== 401) setError(error.message);
   }
 
   render();
 }
 
-async function loadPublicData() {
-  const [{ movies }, { facets }, health] = await Promise.all([
-    api('/api/movies', { auth: false }),
-    api('/api/movies/facets', { auth: false }),
-    api('/api/health', { auth: false }),
-  ]);
-
-  state.movies = movies;
-  state.facets = facets;
+async function loadPublicStatus() {
+  const health = await api('/api/health', { auth: false });
   state.pinecone = health.pinecone;
 }
 
-async function loadSession() {
-  const [{ user }, { interactions }] = await Promise.all([
-    api('/api/auth/me'),
-    api('/api/me/interactions'),
+async function loadCatalog() {
+  const [{ movies }, { facets }] = await Promise.all([
+    api('/api/movies'),
+    api('/api/movies/facets'),
   ]);
+  state.movies = movies;
+  state.facets = facets;
+}
 
+async function loadSession() {
+  const { user } = await api('/api/auth/me');
   state.user = user;
+
+  const requests = [
+    api('/api/me/interactions'),
+    loadCatalog(),
+  ];
+
+  if (user.isAdmin) {
+    requests.push(api('/api/pinecone/status').then(({ pinecone }) => {
+      state.pinecone = pinecone;
+    }));
+  }
+
+  const [{ interactions }] = await Promise.all(requests);
   state.interactions = interactions;
 }
 
@@ -95,13 +103,10 @@ async function api(path, options = {}) {
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
   };
 
-  if (options.auth !== false && state.token) {
-    headers.Authorization = `Bearer ${state.token}`;
-  }
-
   const response = await fetch(path, {
     method: options.method ?? 'GET',
     headers,
+    credentials: 'same-origin',
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
@@ -109,7 +114,9 @@ async function api(path, options = {}) {
   const payload = contentType.includes('application/json') ? await response.json() : {};
 
   if (!response.ok) {
-    throw new Error(payload.error?.message ?? 'Não foi possível concluir a operação.');
+    const error = new Error(payload.error?.message ?? 'Não foi possível concluir a operação.');
+    error.status = response.status;
+    throw error;
   }
 
   return payload;
@@ -206,10 +213,9 @@ async function handleAuthSubmit(event) {
       body,
     });
 
-    state.token = payload.token;
     state.user = payload.user;
     state.interactions = [];
-    localStorage.setItem(TOKEN_KEY, payload.token);
+    await loadCatalog();
     render();
   } catch (error) {
     setError(error.message);
@@ -316,6 +322,11 @@ async function handleOnboardingSubmit(event) {
 function renderDashboard() {
   const onboarding = state.user.onboarding ?? {};
   const pineconeEnabled = Boolean(state.pinecone?.enabled);
+  const isAdmin = Boolean(state.user?.isAdmin);
+  const adminControls = isAdmin ? `
+    <button class="secondary-btn" id="trainBtn" type="button">Treinar modelo</button>
+    <button class="ghost-btn" id="syncPineconeBtn" type="button" ${pineconeEnabled ? '' : 'disabled'}>Sincronizar Pinecone</button>
+  ` : '';
 
   app.innerHTML = `
     <main class="dashboard">
@@ -364,8 +375,7 @@ function renderDashboard() {
               </div>
               <div class="control-row">
                 <button class="primary-btn" id="recommendBtn" type="button">Gerar recomendações</button>
-                <button class="secondary-btn" id="trainBtn" type="button">Treinar modelo</button>
-                <button class="ghost-btn" id="syncPineconeBtn" type="button" ${pineconeEnabled ? '' : 'disabled'}>Sincronizar Pinecone</button>
+                ${adminControls}
               </div>
             </div>
             <div class="model-meter" aria-live="polite">
@@ -428,7 +438,12 @@ function bindDashboardEvents() {
     clearMessages();
     renderOnboarding();
   });
-  document.querySelector('#logoutBtn')?.addEventListener('click', () => {
+  document.querySelector('#logoutBtn')?.addEventListener('click', async () => {
+    try {
+      await api('/api/auth/logout', { method: 'POST', auth: false });
+    } catch {
+      // Logout local still clears any stale client state.
+    }
     resetSession();
     renderAuth();
   });
@@ -444,14 +459,14 @@ function bindDashboardEvents() {
     await runWithRender(loadRecommendations);
   });
 
-  document.querySelector('#trainBtn').addEventListener('click', async () => {
+  document.querySelector('#trainBtn')?.addEventListener('click', async () => {
     await runWithRender(async () => {
       await trainBrowserModel();
       await loadRecommendations();
     });
   });
 
-  document.querySelector('#syncPineconeBtn').addEventListener('click', async () => {
+  document.querySelector('#syncPineconeBtn')?.addEventListener('click', async () => {
     await runWithRender(syncPinecone);
   });
 
@@ -682,6 +697,10 @@ async function loadRecommendations() {
 }
 
 async function trainBrowserModel() {
+  if (!state.user?.isAdmin) {
+    throw new Error('Treinamento local restrito a administradores.');
+  }
+
   if (!window.tf) {
     state.model.status = 'TensorFlow.js não carregou. A recomendação do backend continua disponível.';
     state.model.ready = false;
@@ -1083,8 +1102,14 @@ function movieMeta(movie) {
 }
 
 function resetSession() {
-  state.token = null;
   state.user = null;
+  state.movies = [];
+  state.facets = {
+    genres: [],
+    moods: [],
+    paces: [],
+    languages: [],
+  };
   state.interactions = [];
   state.recommendations = [];
   state.menuOpen = false;
@@ -1098,7 +1123,7 @@ function resetSession() {
     progress: 0,
     status: 'Modelo ainda não treinado.',
   };
-  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 function clearMessages() {

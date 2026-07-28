@@ -2,14 +2,27 @@ import { randomUUID } from 'node:crypto';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { HttpError } from '../utils/http.js';
 
-function publicUser(user) {
+function publicUser(user, isAdmin = false) {
   const { passwordHash, ...safeUser } = user;
-  return safeUser;
+  return { ...safeUser, isAdmin };
 }
 
 export class AuthService {
-  constructor(store) {
+  constructor(store, options = {}) {
     this.store = store;
+    this.adminEmails = new Set(
+      (options.adminEmails ?? [])
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    );
+  }
+
+  isAdminUser(user) {
+    return this.adminEmails.has(String(user?.email ?? '').trim().toLowerCase());
+  }
+
+  toPublicUser(user) {
+    return publicUser(user, this.isAdminUser(user));
   }
 
   async signup({ name, email, password }) {
@@ -35,7 +48,7 @@ export class AuthService {
       };
 
       db.users.push(user);
-      return publicUser(user);
+      return this.toPublicUser(user);
     });
   }
 
@@ -48,14 +61,14 @@ export class AuthService {
       throw new HttpError(401, 'E-mail ou senha inválidos.');
     }
 
-    return publicUser(user);
+    return this.toPublicUser(user);
   }
 
   async getPublicUser(userId) {
     const db = await this.store.read();
     const user = db.users.find((item) => item.id === userId);
     if (!user) throw new HttpError(404, 'Usuário não encontrado.');
-    return publicUser(user);
+    return this.toPublicUser(user);
   }
 
   async updateProfile(userId, payload) {
@@ -79,7 +92,7 @@ export class AuthService {
       user.profilePhotoUrl = profilePhotoUrl;
       user.updatedAt = new Date().toISOString();
 
-      return publicUser(user);
+      return this.toPublicUser(user);
     });
   }
 
@@ -99,7 +112,7 @@ export class AuthService {
       user.passwordHash = hashPassword(payload.newPassword);
       user.updatedAt = new Date().toISOString();
 
-      return publicUser(user);
+      return this.toPublicUser(user);
     });
   }
 
@@ -119,7 +132,7 @@ export class AuthService {
       };
       user.updatedAt = new Date().toISOString();
 
-      return publicUser(user);
+      return this.toPublicUser(user);
     });
   }
 }

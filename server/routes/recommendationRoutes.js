@@ -4,14 +4,16 @@ import { buildTasteQuery, rankLocalCandidates } from '../services/movieRecommend
 
 export function createRecommendationRoutes({
   store,
+  authService,
   movieRepository,
   trainingService,
   pineconeIndex,
   requireAuth,
+  requireAdmin,
 }) {
   const router = Router();
 
-  router.get('/recommendations/training-data', requireAuth, asyncHandler(async (req, res) => {
+  router.get('/recommendations/training-data', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
     const payload = await trainingService.getTrainingPayload(req.user.id);
     res.json(payload);
   }));
@@ -24,6 +26,7 @@ export function createRecommendationRoutes({
     const user = db.users.find((item) => item.id === req.user.id);
     const interactions = db.interactions.filter((interaction) => interaction.userId === req.user.id);
     const userProfile = { ...user, interactions };
+    const isAdmin = authService.isAdminUser(user);
     const tasteQuery = req.body.tasteQuery || buildTasteQuery(userProfile);
 
     let candidates = [];
@@ -58,17 +61,17 @@ export function createRecommendationRoutes({
       candidates: candidates.slice(0, limit),
       tasteQuery,
       pinecone: {
-        ...pineconeIndex.status(),
-        error: pineconeError,
+        ...pineconeIndex.status({ detailed: isAdmin }),
+        ...(isAdmin ? { error: pineconeError } : {}),
       },
     });
   }));
 
-  router.get('/pinecone/status', requireAuth, asyncHandler(async (_req, res) => {
-    res.json({ pinecone: pineconeIndex.status() });
+  router.get('/pinecone/status', requireAuth, requireAdmin, asyncHandler(async (_req, res) => {
+    res.json({ pinecone: pineconeIndex.status({ detailed: true }) });
   }));
 
-  router.post('/pinecone/sync', requireAuth, asyncHandler(async (_req, res) => {
+  router.post('/pinecone/sync', requireAuth, requireAdmin, asyncHandler(async (_req, res) => {
     const movies = await movieRepository.listMovies();
     const result = await pineconeIndex.syncMovies(movies);
     res.json({ pinecone: result });

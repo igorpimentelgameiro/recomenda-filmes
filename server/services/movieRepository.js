@@ -15,6 +15,11 @@ function buildSearchText(movie) {
   ].filter(Boolean).join('. ');
 }
 
+function publicMovie(movie) {
+  const { searchText, ...safeMovie } = movie;
+  return safeMovie;
+}
+
 export class MovieRepository {
   constructor(filePath) {
     this.filePath = filePath;
@@ -31,6 +36,11 @@ export class MovieRepository {
     }
 
     return this.cache;
+  }
+
+  async listPublicMovies() {
+    const movies = await this.listMovies();
+    return movies.map(publicMovie);
   }
 
   async getById(movieId) {

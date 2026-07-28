@@ -29,6 +29,12 @@ PINECONE_INDEX=recomenda-filmes
 PINECONE_NAMESPACE=movies
 ```
 
+Para liberar ações administrativas, como sincronizar Pinecone e baixar dados de treino no navegador, configure uma lista de e-mails separados por vírgula:
+
+```bash
+ADMIN_EMAILS=admin@example.com,outro-admin@example.com
+```
+
 Para melhor uso em produção, também informe `PINECONE_INDEX_HOST` depois de criar ou localizar o índice no painel do Pinecone. Em seguida, sincronize os filmes:
 
 ```bash

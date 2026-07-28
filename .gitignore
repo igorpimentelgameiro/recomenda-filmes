@@ -3,12 +3,12 @@ node_modules/
 # Environment and secrets
 .env
 .env.*
-!.env.example
 
 # Runtime data and generated datasets
 data/*.db.json
 data/kaggle/
 data/locales/**/translation-cache.json
+*.png
 
 # Logs
 logs/
