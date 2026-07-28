@@ -1,0 +1,29 @@
+{
+  "name": "recomenda-filmes",
+  "version": "1.0.0",
+  "description": "Recomendador de filmes com TensorFlow.js, onboarding de preferências e integração opcional com Pinecone.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "node --watch server/index.js",
+    "start": "node server/index.js",
+    "download:kaggle": "node scripts/download-kaggle-dataset.js",
+    "import:kaggle": "node scripts/import-kaggle-movies.js",
+    "localize:ptbr": "node scripts/localize-movies-ptbr.js",
+    "seed:pinecone": "node scripts/sync-pinecone.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "recommendation-system",
+    "tensorflowjs",
+    "pinecone",
+    "movies"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@pinecone-database/pinecone": "^8.1.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

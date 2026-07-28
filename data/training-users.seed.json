@@ -1,0 +1,114 @@
+[
+  {
+    "id": "seed-ana",
+    "name": "Ana",
+    "ageRange": "25-34",
+    "favoriteGenres": ["Drama", "Ficção científica"],
+    "favoriteMoods": ["contemplativo", "emocionante"],
+    "preferredPace": "lento",
+    "interactions": [
+      { "movieId": "arrival", "eventType": "liked", "rating": 5 },
+      { "movieId": "interstellar", "eventType": "liked", "rating": 5 },
+      { "movieId": "her", "eventType": "liked", "rating": 4 },
+      { "movieId": "mad-max-fury-road", "eventType": "disliked", "rating": 2 }
+    ]
+  },
+  {
+    "id": "seed-bruno",
+    "name": "Bruno",
+    "ageRange": "18-24",
+    "favoriteGenres": ["Ação", "Ficção científica", "Cyberpunk"],
+    "favoriteMoods": ["intenso", "estiloso"],
+    "preferredPace": "rápido",
+    "interactions": [
+      { "movieId": "matrix", "eventType": "liked", "rating": 5 },
+      { "movieId": "the-dark-knight", "eventType": "liked", "rating": 5 },
+      { "movieId": "mad-max-fury-road", "eventType": "liked", "rating": 4 },
+      { "movieId": "moonlight", "eventType": "disliked", "rating": 2 }
+    ]
+  },
+  {
+    "id": "seed-carol",
+    "name": "Carol",
+    "ageRange": "35-44",
+    "favoriteGenres": ["Crime", "Drama"],
+    "favoriteMoods": ["denso", "político", "realista"],
+    "preferredPace": "médio",
+    "interactions": [
+      { "movieId": "the-godfather", "eventType": "liked", "rating": 5 },
+      { "movieId": "parasite", "eventType": "liked", "rating": 5 },
+      { "movieId": "city-of-god", "eventType": "liked", "rating": 5 },
+      { "movieId": "coco", "eventType": "disliked", "rating": 2 }
+    ]
+  },
+  {
+    "id": "seed-diego",
+    "name": "Diego",
+    "ageRange": "25-34",
+    "favoriteGenres": ["Animação", "Fantasia", "Família"],
+    "favoriteMoods": ["mágico", "familiar", "colorido"],
+    "preferredPace": "médio",
+    "interactions": [
+      { "movieId": "spirited-away", "eventType": "liked", "rating": 5 },
+      { "movieId": "coco", "eventType": "liked", "rating": 5 },
+      { "movieId": "la-la-land", "eventType": "liked", "rating": 4 },
+      { "movieId": "get-out", "eventType": "disliked", "rating": 1 }
+    ]
+  },
+  {
+    "id": "seed-elisa",
+    "name": "Elisa",
+    "ageRange": "18-24",
+    "favoriteGenres": ["Terror", "Suspense", "Comédia ácida"],
+    "favoriteMoods": ["tenso", "provocador", "inquietante"],
+    "preferredPace": "médio",
+    "interactions": [
+      { "movieId": "get-out", "eventType": "liked", "rating": 5 },
+      { "movieId": "parasite", "eventType": "liked", "rating": 5 },
+      { "movieId": "inception", "eventType": "liked", "rating": 4 },
+      { "movieId": "la-la-land", "eventType": "disliked", "rating": 2 }
+    ]
+  },
+  {
+    "id": "seed-felipe",
+    "name": "Felipe",
+    "ageRange": "45+",
+    "favoriteGenres": ["Música", "Drama", "Biografia"],
+    "favoriteMoods": ["inspirador", "dialogado", "obsessivo"],
+    "preferredPace": "médio",
+    "interactions": [
+      { "movieId": "whiplash", "eventType": "liked", "rating": 5 },
+      { "movieId": "the-social-network", "eventType": "liked", "rating": 4 },
+      { "movieId": "la-la-land", "eventType": "liked", "rating": 4 },
+      { "movieId": "dune", "eventType": "disliked", "rating": 2 }
+    ]
+  },
+  {
+    "id": "seed-gabi",
+    "name": "Gabi",
+    "ageRange": "25-34",
+    "favoriteGenres": ["Aventura", "Comédia", "Ficção científica"],
+    "favoriteMoods": ["caótico", "surpreendente", "épico"],
+    "preferredPace": "rápido",
+    "interactions": [
+      { "movieId": "everything-everywhere", "eventType": "liked", "rating": 5 },
+      { "movieId": "dune", "eventType": "liked", "rating": 4 },
+      { "movieId": "inception", "eventType": "liked", "rating": 5 },
+      { "movieId": "the-godfather", "eventType": "disliked", "rating": 2 }
+    ]
+  },
+  {
+    "id": "seed-hugo",
+    "name": "Hugo",
+    "ageRange": "35-44",
+    "favoriteGenres": ["Neo-noir", "Ficção científica", "Drama"],
+    "favoriteMoods": ["sombrio", "visual", "contemplativo"],
+    "preferredPace": "lento",
+    "interactions": [
+      { "movieId": "blade-runner-2049", "eventType": "liked", "rating": 5 },
+      { "movieId": "arrival", "eventType": "liked", "rating": 4 },
+      { "movieId": "dune", "eventType": "liked", "rating": 4 },
+      { "movieId": "coco", "eventType": "disliked", "rating": 1 }
+    ]
+  }
+]
