@@ -15,6 +15,45 @@ const EVENT_RATING = {
   disliked: 1,
 };
 
+const AUTH_FEATURED_MOVIES = [
+  {
+    title: 'A Origem',
+    tone: 'Sci-fi cerebral',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
+    colors: ['#1e566b', '#a84834'],
+  },
+  {
+    title: 'Interestelar',
+    tone: 'Drama épico',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+    colors: ['#cfd8dc', '#42515f'],
+  },
+  {
+    title: 'Matrix',
+    tone: 'Ação cyberpunk',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
+    colors: ['#102f28', '#3f8a5f'],
+  },
+  {
+    title: 'Parasita',
+    tone: 'Suspense social',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
+    colors: ['#193f43', '#e3a33d'],
+  },
+  {
+    title: 'Batman: O Cavaleiro das Trevas',
+    tone: 'Crime intenso',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
+    colors: ['#0f1b2b', '#d25f2c'],
+  },
+  {
+    title: 'Duna',
+    tone: 'Aventura monumental',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg',
+    colors: ['#8c6d4e', '#202e39'],
+  },
+];
+
 const state = {
   authMode: 'login',
   user: null,
@@ -148,11 +187,28 @@ function renderAuth() {
   app.innerHTML = `
     <main class="auth-layout">
       <section class="auth-panel">
-        <div class="auth-copy">
-          <h1>Recomenda Filmes</h1>
-          <p>Um recomendador pessoal com perfil de gosto, histórico de interações, TensorFlow.js no navegador e busca vetorial opcional com Pinecone.</p>
-        </div>
-        <section class="form-card">
+        <section class="auth-cinema-card" aria-label="Filmes em destaque">
+          <div class="auth-carousel" aria-live="off">
+            ${authCarouselSlides()}
+          </div>
+          <div class="poster-rail" aria-hidden="true">
+            ${AUTH_FEATURED_MOVIES.map((movie) => `
+              <span class="poster-thumb" style="${posterPaletteStyle(movie)}">
+                <span>${escapeHtml(shortMovieTitle(movie.title))}</span>
+                <img src="${escapeAttr(movie.posterUrl)}" alt="" loading="lazy" data-auth-poster>
+              </span>
+            `).join('')}
+          </div>
+        </section>
+
+        <section class="form-card auth-form-card">
+          <div class="auth-brand">
+            ${brandLogo('large')}
+          </div>
+          <div class="auth-form-head">
+            <h1>${state.authMode === 'login' ? 'Entre no seu cinema particular.' : 'Crie seu perfil de gosto.'}</h1>
+            <p>${state.authMode === 'login' ? 'Continue sua curadoria com recomendações moldadas pelo que você assiste, salva e evita.' : 'Comece com uma conta simples e ajuste suas preferências logo em seguida.'}</p>
+          </div>
           <div class="tab-row" role="tablist" aria-label="Autenticação">
             <button type="button" data-auth-mode="login" aria-selected="${state.authMode === 'login'}">Entrar</button>
             <button type="button" data-auth-mode="signup" aria-selected="${state.authMode === 'signup'}">Cadastro</button>
@@ -180,6 +236,8 @@ function renderAuth() {
       </section>
     </main>
   `;
+
+  bindAuthPosterFallbacks();
 
   document.querySelectorAll('[data-auth-mode]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -332,7 +390,7 @@ function renderDashboard() {
     <main class="dashboard">
       <header class="topbar">
         <div class="brand">
-          <h1>Recomenda Filmes</h1>
+          ${brandLogo('compact')}
         </div>
         ${renderAccountMenu()}
       </header>
@@ -511,6 +569,44 @@ function renderAccountMenu() {
       ` : ''}
     </div>
   `;
+}
+
+function brandLogo(size = '') {
+  const className = `brand-logo ${size}`.trim();
+
+  return `
+    <span class="${className}">
+      <span class="logo-mark" aria-hidden="true">RF</span>
+      <span class="logo-type">
+        <span>Recomenda</span>
+        <strong>Filmes</strong>
+      </span>
+    </span>
+  `;
+}
+
+function authCarouselSlides() {
+  return AUTH_FEATURED_MOVIES.map((movie, index) => `
+    <article class="carousel-slide" style="--slide-index: ${index}; ${posterPaletteStyle(movie)}">
+      <div class="carousel-poster-fallback" aria-hidden="true">
+        <span>${escapeHtml(movie.title)}</span>
+      </div>
+      <img src="${escapeAttr(movie.posterUrl)}" alt="Poster de ${escapeAttr(movie.title)}" data-auth-poster>
+      <div class="carousel-caption">
+        <span>${escapeHtml(movie.tone)}</span>
+        <strong>${escapeHtml(movie.title)}</strong>
+      </div>
+    </article>
+  `).join('');
+}
+
+function posterPaletteStyle(movie) {
+  const [start, end] = movie.colors;
+  return `--poster-start: ${start}; --poster-end: ${end};`;
+}
+
+function shortMovieTitle(title) {
+  return String(title).split(':')[0];
 }
 
 function avatarMarkup(size = '') {
@@ -1027,6 +1123,22 @@ function bindPosterFallbacks() {
       const poster = image.closest('.poster-wrap');
       poster?.classList.add('poster-error');
       image.remove();
+    }, { once: true });
+  });
+}
+
+function bindAuthPosterFallbacks() {
+  document.querySelectorAll('[data-auth-poster]').forEach((image) => {
+    if (image.complete && image.naturalWidth > 0) {
+      image.classList.add('poster-loaded');
+    }
+
+    image.addEventListener('load', () => {
+      image.classList.add('poster-loaded');
+    }, { once: true });
+
+    image.addEventListener('error', () => {
+      image.classList.add('poster-load-error');
     }, { once: true });
   });
 }
